@@ -1,0 +1,23 @@
+// Comprobaremos que variables de entornos que creemos aquí van a poder ser accedidas desde scripts (en este caso test.sh) que nosotros creemos
+pipeline {
+    agent any
+
+    environment {
+        DEMO='1.3'
+    }
+
+    stages {
+        stage('stage-1') {
+            steps {
+                echo "This is the build number $BUILD_NUMBER of demo $DEMO"
+                // Vamos a añadir varios comandos de shell, para comando único se escribe sh 'comando' si son comandos multilínea sería sh ''' cada línea de comando dentro de las triples comillas '''
+                // En los comandos se usan comillas simples para evitar interpolaciones no deseadas de las variables que se nombraran en los scripts
+                sh '''
+                echo "Using a multi-line shell step"
+                chmod +x test.sh
+                ./test.sh
+                '''
+            }
+        }
+    }
+}

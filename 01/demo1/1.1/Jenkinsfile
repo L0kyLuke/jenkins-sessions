@@ -15,7 +15,7 @@ pipeline {
                 sh '''
                 echo "Using a multi-line shell step"
                 chmod +x ./01/demo1/1.1/test.sh
-                ./test.sh
+                ./01/demo1/1.1/test.sh
                 '''
             }
         }

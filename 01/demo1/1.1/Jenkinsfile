@@ -14,7 +14,7 @@ pipeline {
                 // En los comandos se usan comillas simples para evitar interpolaciones no deseadas de las variables que se nombraran en los scripts
                 sh '''
                 echo "Using a multi-line shell step"
-                chmod +x test.sh
+                chmod +x .01/demo1/1.1/test.sh
                 ./test.sh
                 '''
             }

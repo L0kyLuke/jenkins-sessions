@@ -1,0 +1,46 @@
+pipeline {
+    agent any
+    environment {
+        RELEASE='0.0.1'
+    }
+    stages {
+        stage('Build') {
+            agent any
+            environment {
+                LOG_LEVEL='INFO'
+            }
+            steps {
+                echo "Building release ${RELEASE} with log level ${LOG_LEVEL}..."
+            }
+        }
+        stage('Test') {
+            steps {
+                echo "Testing release ${RELEASE}..."
+            }
+        }
+        stage('Deploy') {
+
+            // Le mostramos el mensaje 'Deploy?' y varios botones al usuario
+            input {
+                message 'Deploy?'
+                ok 'Do it!'
+
+                // El contenido de lo que haya elegido el usuario lo voy a guardar en la variable TARGET_ENVIRONMENT, cuyo valor por defecto es 'PROD'
+                parameters {
+                    string(name: 'TARGET_ENVIRONMENT', defaultValue: 'PROD', description: 'Target deployment environment')
+                }
+            }
+            // Una vez el usuario ha alimentado esa entrada ejecutamos los steps
+            steps {
+                echo "Deploying release ${RELEASE} to environment ${TARGET_ENVIRONMENT}"
+            }
+        }
+    }
+    // La directiva post puede ponerse, al igual que environment, tanto en la raiz o dentro de un stage específico, sirve para realizar ciertas operaciones cuando se hayan ejecutado todos los steps de un stage o todos los stages (si se ha puesto a nivel global)
+    post {
+        // Podemos elegir que se ejecute always, changed (el stage se haya ejecutado debido a un cambio), fixed (el stage se haya ejecutado debido a un fix), aborted (si el stage ha sido abortado), failure (si el stage ha fallado), success (únicamente cuando ha tenido éxito), unstable (ha ido bien pero no del todo), etc
+        always {
+            echo 'Prints wether deploy happened or not, success or failure'
+        }
+    }
+}

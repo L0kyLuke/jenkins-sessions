@@ -4,7 +4,7 @@ pipeline {
         booleanParam(name: 'RC', defaultValue: false, description: 'Is this a Release Candidate?')
     }
     environment {
-        VERSION = sh([ script: 'cd ./01/solution && npx -c \'echo $npm_package_version\'', returnStdout: true ]).trim()
+        VERSION = sh([ script: 'cd ./02/solution && npx -c \'echo $npm_package_version\'', returnStdout: true ]).trim()
         VERSION_RC = "rc.2"
     }
     stages {
@@ -18,7 +18,7 @@ pipeline {
                VERSION_SUFFIX = getVersionSuffix()
             }
             steps {
-                dir('./01/solution') {
+                dir('./02/solution') {
                     echo "Building version ${VERSION} with suffix: ${VERSION_SUFFIX}"
                     sh '''
                         npm install
@@ -29,7 +29,7 @@ pipeline {
         }
         stage('Unit Test') {
             steps {
-                dir('./01/solution') {
+                dir('./02/solution') {
                     sh 'npm test'
                 }
             }
@@ -39,7 +39,7 @@ pipeline {
                 expression { return params.RC }
             }
             steps {
-                archiveArtifacts('01/solution/app/')
+                archiveArtifacts('02/solution/app/')
             }
         }
     }

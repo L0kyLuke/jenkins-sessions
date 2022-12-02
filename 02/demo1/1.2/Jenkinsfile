@@ -6,7 +6,7 @@ pipeline {
     }
     // Entramos en la app y obtenemos la versión del package.json
     environment {
-        VERSION = sh([ script: 'cd ./01/solution && npx -c \'echo $npm_package_version\'', returnStdout: true ]).trim()
+        VERSION = sh([ script: 'cd ./02/solution && npx -c \'echo $npm_package_version\'', returnStdout: true ]).trim()
         VERSION_RC = "rc.2"
     }
     stages {
@@ -42,7 +42,7 @@ pipeline {
         // Tests unitarios
         stage('Unit Test') {
             steps {
-                dir('./01/solution') {
+                dir('./02/solution') {
                     sh 'npm test'
                 }
             }

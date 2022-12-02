@@ -1,0 +1,35 @@
+pipeline {
+    agent {// especificamos que el agente será Docker. Al estar en la raíz todos los stages se ejecutarán en un contenedor que use la imagen de Docker, así si trabajamos con distintos nodos no hace falta instalar Node.js en cada uno de ellos
+        docker {
+            image 'node:alpine3.12' // Especificamos la imagen a utilizar
+        }
+    }
+    stages {
+        stage('Verify') {
+            steps {
+                sh '''
+                  node --version
+                  npm version
+                '''
+                sh 'printenv | sort' // Imprimir variables de intorno
+            }
+        }
+        stage('Build') { // Hacemos el build
+            steps {
+                dir("$WORKSPACE/03/solution") {
+                    sh '''
+                      npm install
+                      npm run build
+                    '''
+                }
+            }
+        }
+        stage('Unit Test') { // Hacemos un test
+            steps {
+              dir("$WORKSPACE/03/solution") {
+                sh 'npm test'
+              }
+            }
+        }
+    }
+}

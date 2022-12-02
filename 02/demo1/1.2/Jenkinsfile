@@ -1,0 +1,121 @@
+pipeline {
+    agent any
+    environment {
+        // Se ejecuta script para sacar la versión de la app (package.json). En este caso permite ejecutar comandos de node al haber instalado Node.js junto a Jenkins
+        // Con returnStdout: True devolvemos el valor devuelto a la variable VERSION. Se aplica el trim en caso de que pudieran haber espacios
+        VERSION = sh([ script: 'cd ./02/solution && npx -c \'echo $npm_package_version\'', returnStdout: true ]).trim()
+        VERSION_RC = "rc.2"
+    }
+    stages {
+        // Mostramos las versiones de git, docker, node y npm que tenemos
+        stage('Audit tools') {
+            steps {
+                sh '''
+                    git version
+                    docker version
+                    node --version
+                    npm version
+                '''
+            }
+        }
+        //  Instala las dependencias de este proyecto (npm install) y ejecuta el script build de este proyecto (package.json)
+        stage('Build') {
+            steps {
+                //De forma declarativa entramos en la carpeta solution y luego se ejecutan esa serie de instrucciones desde dentro de la carpeta
+                dir('./02/solution') {
+                    echo "Building version ${VERSION} with suffix: ${VERSION_RC}"
+                    sh '''
+                    npm install
+                    npm run build
+                    '''
+                }
+            }
+        }
+        // Realizamos pruebas unitarias
+        stage('Unit Test') {
+            steps {
+                dir('./02/solution') {
+                    sh 'npm test'
+                }
+            }
+        }
+    }
+}
+```
+
+Subimos los cambios al repositorio
+```sh
+git add .
+git commit -m "demo-clean1.1"
+git push
+```
+
+Volvemos a `Jenkins` y creamos la pipeline copiando los datos de la demo-2-1.3, cambiando el directorio donde se encuentra el `Jenkinsfile` y la ejecutamos. Posteriormente si observamos el log podemos ver como cada paso se ha ido ejecutando secuencialmente
+
+### Pipelines condicionales
+- [Índice](#jenkins)
+
+Podemos definir la ejecución de ramas de un proyecto o stages en base a ciertos condicionales
+
+Creamos el `Jenkinsfile` (02/demo1/1.2/)
+```groovy
+pipeline {
+    agent any
+    // Añadimos un nuevo parámetro, será booleano. La variable que va a recoger ese parámetro es RC (valor por defecto false)
+    parameters {
+        booleanParam(name: 'RC', defaultValue: false, description: 'Is this a Release Candidate?')
+    }
+    // Entramos en la app y obtenemos la versión del package.json
+    environment {
+        VERSION = sh([ script: 'cd ./01/solution && npx -c \'echo $npm_package_version\'', returnStdout: true ]).trim()
+        VERSION_RC = "rc.2"
+    }
+    stages {
+        // Hacemos auditoría de herramientas para ver sus versiones
+        stage('Audit tools') {
+            steps {
+                sh '''
+                    git version
+                    docker version
+                    node --version
+                    npm version
+                '''
+            }
+        }
+        stage('Build') {
+            // Añadimos variable de entorno cuya valor va a estar condicionado a si el booleano anterior será true o false. Si estamos en una Release Candidate le damos el valor de VERSION_RC+texto extra, si no le damos el valor de VERSION_RC solo
+            environment {
+                VERSION_SUFFIX = sh(script:'if [ "${RC}" == "true" ] ; then echo -n "${VERSION_RC}+ci.${BUILD_NUMBER}"; else echo -n "${VERSION_RC}"; fi', returnStdout: true)
+            }
+            
+            steps {
+                // Entramos en la app y hacemos build e imprimimos como cambia la versión según el condicional anterior
+                dir('./02/solution') {
+                    // echo "Building version ${VERSION} with suffix: ${VERSION_RC}"
+                    echo "Building version ${VERSION} with suffix: ${VERSION_SUFFIX}"
+                    sh '''
+                        npm install
+                        npm run build
+                    '''
+                }
+            }
+        }
+        // Tests unitarios
+        stage('Unit Test') {
+            steps {
+                dir('./01/solution') {
+                    sh 'npm test'
+                }
+            }
+        }
+        // Esta stage solo se ejecuta cuando sea una Release Candidate (o sea, la expresión booleana sea verdadera)
+        stage('Publish') {
+            when { // when acepta varias cosas: branch (para una rama específica), buildingTag (uso de tags), equals (expresión de igualdad), expression (expresión booleana)
+                expression { return params.RC }
+            }
+            steps { // Se va a generar el directorio app/ y todos los ficheros generados con npm run build se van a guardar en él
+                archiveArtifacts('02/solution/app/')
+            }
+        }
+    }
+}

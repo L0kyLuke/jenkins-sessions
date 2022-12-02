@@ -1,0 +1,19 @@
+library( // Definimos la librería de forma dinámica
+    identifier: 'jenkins-lib@main', // Nombre de la librería
+    retriever: modernSCM( // Quien la trae. Va con varios parámetros
+    $class: 'GitSCMSource', // La clase
+    remote: 'https://github.com/L0kyLuke/jenkins-sessions-library.git', // ruta repositorio
+    credentialsId: 'f5cc1152-ba3c-47dc-ae97-1ad680bb3878' // En caso de necesitar credenciales ponemos el Id
+    )
+)
+
+pipeline {
+    agent any
+    stages { // Ejecutamos la función auditTools que está en el otro repo en el fichero auditTools.groovy
+        stage('Audit tools') {
+            steps {
+                auditTools()
+            }
+        }
+    }
+}

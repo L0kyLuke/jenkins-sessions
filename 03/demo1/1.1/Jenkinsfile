@@ -14,9 +14,9 @@ pipeline {
                 sh 'printenv | sort' // Imprimir variables de intorno
             }
         }
-        stage('Build') { // Hacemos el build
+        stage('Build') { // Hacemos el build del proyecto solution usado anteriormente
             steps {
-                dir("$WORKSPACE/03/solution") {
+                dir("$WORKSPACE/02/solution") { // Ponemos la ruta donde tenemos el proyecto deejemplos anteriores copiado
                     sh '''
                       npm install
                       npm run build
@@ -26,7 +26,7 @@ pipeline {
         }
         stage('Unit Test') { // Hacemos un test
             steps {
-              dir("$WORKSPACE/03/solution") {
+              dir("$WORKSPACE/02/solution") {
                 sh 'npm test'
               }
             }
